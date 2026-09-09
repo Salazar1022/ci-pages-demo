@@ -1,4 +1,5 @@
 from main import saludo
 
 def test_saludo():
-    assert saludo () == "Hola CI/CD!"
+    # Valor incorrecto a proposito para que pytest falle
+    assert saludo () == "Hola Mundo"
