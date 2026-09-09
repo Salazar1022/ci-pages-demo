@@ -1,0 +1,73 @@
+
+name: CI-CD-Pipeline
+
+# Permisos para que github-actions[bot] pueda hacer push a gh-pages
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  # 1. JOB BUILD (con los 8 pasos)
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # 2. Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 3. Instalar dependencias
+      - name: Install deps
+        run: pip install pytest pylint
+
+      # 4. Análisis estático
+      - name: Lint (pylint)
+        run: pylint **/*.py || true
+
+      # 5. Pruebas unitarias
+      - name: Run tests
+        run: pytest -q
+
+      # 6. Build
+      - name: Build
+        run: echo "Build listo"
+
+      # 7. Upload build artifact (opcional)
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sitio
+          path: build/
+
+      # 8. (Opcional) Verificar que build existe
+      - name: Verificar carpeta build
+        run: ls -R build
+
+  # 2. JOB DEPLOY a GitHub Pages
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout con historial completo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # NECESARIO para que gh-pages acepte commits
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
